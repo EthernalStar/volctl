@@ -6,7 +6,7 @@ procedure DisplayUsage;
 begin
 
   WriteLn('                                                             ');
-  WriteLn('volctl Version 1.0.0 - by EthernalStar                       ');
+  WriteLn('volctl Version 1.0.1 - by EthernalStar                       ');
   WriteLn('                                                             ');
   WriteLn('LICENSED under the GNU General Public License v3.0.          ');
   WriteLn('                                                             ');
@@ -23,20 +23,24 @@ begin
   WriteLn('                                                             ');
   WriteLn('Changelog:                                                   ');
   WriteLn(' > v1.0.0: Initial Release.                                  ');
+  WriteLn(' > v1.0.1: Added Volume forcing and limiting.                ');
   WriteLn('                                                             ');
   WriteLn('Usage:                                                       ');
   WriteLn('                                                             ');
   WriteLn('Display this Help  : volctl.exe -h                           ');
   WriteLn('Get Volume         : volctl.exe -g                           ');
-  WriteLn('Set Volume         : volctl.exe -s <to value>                ');
+  WriteLn('Set Volume         : volctl.exe -s  <value>                  '); 
+  WriteLn('Increase Volume    : volctl.exe -i  <value>                  ');
+  WriteLn('Decrease Volume    : volctl.exe -d  <value>                  ');
   WriteLn('Set Volume to 0    : volctl.exe -z                           ');
-  WriteLn('Set Volume Random  : volctl.exe -r                           ');
-  WriteLn('Increase Volume    : volctl.exe -i <by value>                ');
-  WriteLn('Decrease Volume    : volctl.exe -d <by value>                ');
+  WriteLn('Set Volume Random  : volctl.exe -r                           ');  
+  WriteLn('Set Volume Limiter : volctl.exe -l  <min> <max>   [BLOCKING] ');
+  WriteLn('Force Volume Loop  : volctl.exe -f  <value>       [BLOCKING] ');
+  WriteLn('Frc. w.o. Auto Mute: volctl.exe -fa <value>       [BLOCKING] ');
   WriteLn('Get Mute Status    : volctl.exe -gm                          ');
   WriteLn('Set Mute Status    : volctl.exe -sm <1|0>                    ');
   WriteLn('Switch Mute Status : volctl.exe -sw                          ');
-  WriteLn('Set w.o. Auto Mute : volctl.exe -sa <to value>               ');
+  WriteLn('Set w.o. Auto Mute : volctl.exe -sa <value>                  ');
 
 end;
 
@@ -60,7 +64,7 @@ var
 
 begin
 
-  if NOT (ParamCount = 1) AND NOT (ParamCount = 2) then begin  //Raise Error if number of Parameters do not match any valid action
+  if NOT (1 <= ParamCount) AND NOT (ParamCount <= 3) then begin  //Raise Error if number of Parameters do not match any valid action
 
     UsageError;  //Display Usage Error
 
@@ -88,6 +92,79 @@ begin
     end;
 
     Volunit.SetVolume(tempInt);  //Set Volume Value from Parameter Input
+
+  end
+  else if ParamStr(1) = '-f' then begin  //-f Parameter
+
+    try
+
+      tempInt := StrToInt(ParamStr(2));  //Check if Input is Integer
+
+    except
+
+      UsageError;  //Display Usage Error
+
+    end;
+
+    while True do begin  //Simple infinite Loop
+
+      Volunit.SetVolume(tempInt);  //Set Volume Value from Parameter Input
+
+    end;
+
+  end
+  else if ParamStr(1) = '-fa' then begin  //-f Parameter
+
+    try
+
+      tempInt := StrToInt(ParamStr(2));  //Check if Input is Integer
+
+    except
+
+      UsageError;  //Display Usage Error
+
+    end;
+
+    while True do begin  //Simple infinite Loop
+
+      Volunit.SetVolume(tempInt, False, False);  //Set Volume Value from Parameter Input
+
+    end;
+
+  end
+  else if ParamStr(1) = '-l' then begin  //-l Parameter
+
+    try
+
+      tempInt := StrToInt(ParamStr(2));  //Check if Input is Integer
+      tempInt := StrToInt(ParamStr(3));  //Check if Input is Integer
+
+    except
+
+      UsageError;  //Display Usage Error
+
+    end;
+
+    if StrToInt(ParamStr(2)) > StrToInt(ParamStr(3)) then begin  //Check if Min > Max
+
+      UsageError;  //Display Usage Error
+
+    end;
+
+    while True do begin  //Simple infinite Loop
+
+      if Volunit.GetVolume < StrToInt(ParamStr(2)) then begin  //Check if Limit is hit
+
+        Volunit.SetVolume(StrToInt(ParamStr(2)));  //Set Volume Value from Parameter Input
+
+      end
+      else if Volunit.GetVolume > StrToInt(ParamStr(3)) then begin  //Check if Limit is hit
+
+        Volunit.SetVolume(StrToInt(ParamStr(3)));  //Set Volume Value from Parameter Input
+
+      end;
+
+    end;
 
   end
   else if ParamStr(1) = '-sa' then begin  //-sa Parameter
